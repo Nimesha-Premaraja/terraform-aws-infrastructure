@@ -1,9 +1,18 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "6.42.0"
+    }
+  }
+}
+
 provider "aws" {
   region = "us-east-1"
 }
 
 module "dev_vpc" {
-  source = "./modules/vpc"
+  source = "../modules/vpc"
 
   region               = "us-east-1"
   vpc_name             = "dev-vpc"
