@@ -30,6 +30,17 @@ resource "aws_subnet" "private" {
   }
 }
 
+# Database Subnet
+resource "aws_subnet" "db" {
+  vpc_id            = aws_vpc.this.id
+  cidr_block        = var.db_subnet_cidr
+  availability_zone = var.az
+
+  tags = {
+    Name = "${var.vpc_name}-db"
+  }
+}
+
 # Internet Gateway
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.this.id
@@ -85,6 +96,11 @@ resource "aws_route" "private_nat" {
 
 resource "aws_route_table_association" "private" {
   subnet_id      = aws_subnet.private.id
+  route_table_id = aws_route_table.private.id
+}
+
+resource "aws_route_table_association" "db" {
+  subnet_id      = aws_subnet.db.id
   route_table_id = aws_route_table.private.id
 }
 

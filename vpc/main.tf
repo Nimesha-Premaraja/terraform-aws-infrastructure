@@ -19,5 +19,6 @@ module "dev_vpc" {
   vpc_cidr            = "10.0.0.0/16"
   public_subnet_cidr  = "10.0.0.0/24"
   private_subnet_cidr = "10.0.144.0/20"
+  db_subnet_cidr      = "10.0.160.0/20"
   az                  = "us-east-1b"
 }
