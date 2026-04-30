@@ -23,6 +23,11 @@ variable "private_subnet_cidr" {
   type        = string
 }
 
+variable "db_subnet_cidr" {
+  description = "Database subnet CIDR"
+  type        = string
+}
+
 variable "az" {
   description = "Availability Zone"
   type        = string
