@@ -19,7 +19,7 @@ module "private-instance" {
 
     name = "dev-private-instance"
     ami = "ami-0ec10929233384c7f"
-    associate_public_ip_address = true
+    associate_public_ip_address = no
     availability_zone = "us-east-1b"
     instance_type   = "t3.micro"
     key_name = aws_key_pair.dev-key.key_name
