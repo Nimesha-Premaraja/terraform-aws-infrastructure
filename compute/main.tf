@@ -38,5 +38,5 @@ resource "tls_private_key" "dev-rsa-key" {
 resource "aws_key_pair" "dev-key" {
     depends_on = [ tls_private_key.dev-rsa-key ]
   key_name   = "generated-key"
-  public_key = tls_private_key.this.public_key_openssh
+  public_key = tls_private_key.dev-rsa-key.public_key_openssh
 }
