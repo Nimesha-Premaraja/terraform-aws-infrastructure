@@ -3,7 +3,6 @@ terraform {
     aws = {
       source  = "hashicorp/aws"
       version = "6.42.0"
-      region  = "us-east-1"
     }
     tls = {
       source  = "hashicorp/tls"

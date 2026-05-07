@@ -1,4 +1,4 @@
-resource "aws_vpc" "this" {
+resource "aws_vpc" "dev" {
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
 
@@ -9,7 +9,7 @@ resource "aws_vpc" "this" {
 
 # Public Subnet (for NAT)
 resource "aws_subnet" "public" {
-  vpc_id                  = aws_vpc.this.id
+  vpc_id                  = aws_vpc.dev.id
   cidr_block              = var.public_subnet_cidr
   availability_zone       = var.az
   map_public_ip_on_launch = true
@@ -21,7 +21,7 @@ resource "aws_subnet" "public" {
 
 # Private Subnet
 resource "aws_subnet" "private" {
-  vpc_id            = aws_vpc.this.id
+  vpc_id            = aws_vpc.dev.id
   cidr_block        = var.private_subnet_cidr
   availability_zone = var.az
 
@@ -32,7 +32,7 @@ resource "aws_subnet" "private" {
 
 # Database Subnet
 resource "aws_subnet" "db" {
-  vpc_id            = aws_vpc.this.id
+  vpc_id            = aws_vpc.dev.id
   cidr_block        = var.db_subnet_cidr
   availability_zone = var.az
 
@@ -43,7 +43,7 @@ resource "aws_subnet" "db" {
 
 # Internet Gateway
 resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.this.id
+  vpc_id = aws_vpc.dev.id
 
   tags = {
     Name = "${var.vpc_name}-igw"
@@ -52,7 +52,7 @@ resource "aws_internet_gateway" "igw" {
 
 # Public Route Table
 resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.this.id
+  vpc_id = aws_vpc.dev.id
 }
 
 resource "aws_route" "public_internet" {
@@ -85,7 +85,7 @@ resource "aws_nat_gateway" "nat" {
 
 # Private Route Table
 resource "aws_route_table" "private" {
-  vpc_id = aws_vpc.this.id
+  vpc_id = aws_vpc.dev.id
 }
 
 resource "aws_route" "private_nat" {
@@ -106,7 +106,7 @@ resource "aws_route_table_association" "db" {
 
 # S3 VPC Endpoint
 resource "aws_vpc_endpoint" "s3" {
-  vpc_id            = aws_vpc.this.id
+  vpc_id            = aws_vpc.dev.id
   service_name      = "com.amazonaws.${var.region}.s3"
   vpc_endpoint_type = "Gateway"
 

@@ -9,7 +9,7 @@ module "public-instance" {
     availability_zone = "us-east-1b"
     instance_type   = "t3.micro"
     key_name = aws_key_pair.dev-key.key_name
-    subnet_id = module.dev_vpc.public_subnet_id
+    subnet_id = data.aws_subnet.public.id
     vpc_security_group_ids = [aws_security_group.allow_tls.id]
 
 }
@@ -21,11 +21,11 @@ module "private-instance" {
 
     name = "dev-private-instance"
     ami = "ami-0ec10929233384c7f"
-    associate_public_ip_address = no
+    associate_public_ip_address = false
     availability_zone = "us-east-1b"
     instance_type   = "t3.micro"
     key_name = aws_key_pair.dev-key.key_name
-    subnet_id = module.dev_vpc.private_subnet_id
+    subnet_id = data.aws_subnet.private.id
     vpc_security_group_ids = [aws_security_group.allow_tls.id]
 
 }
@@ -38,5 +38,5 @@ resource "tls_private_key" "dev-rsa-key" {
 resource "aws_key_pair" "dev-key" {
     depends_on = [ tls_private_key.dev-rsa-key ]
   key_name   = "generated-key"
-  public_key = tls_private_key.this.public_key_openssh
+  public_key = tls_private_key.dev-rsa-key.public_key_openssh
 }
