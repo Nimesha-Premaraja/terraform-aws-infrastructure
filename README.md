@@ -8,33 +8,8 @@ This repository contains a modular, decoupled 2-tier AWS infrastructure managed 
 
 The infrastructure is split into two distinct tiers to isolate state and limit the blast radius of changes:
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                              AWS REGION                                │
-│                                                                        │
-│  ┌──────────────────────────────────────────────────────────────────┐  │
-│  │                            VPC (DEV)                             │  │
-│  │                                                                  │  │
-│  │  ┌─────────────────────────┐  ┌───────────────────────────────┐  │  │
-│  │  │      PUBLIC SUBNET      │  │        PRIVATE SUBNET         │  │  │
-│  │  │                         │  │                               │  │  │
-│  │  │  ┌───────────────────┐  │  │  ┌─────────────────────────┐  │  │  │
-│  │  │  │    NAT Gateway    │◄─┼──┼──┤    Private Instance     │  │  │  │
-│  │  │  └─────────┬─────────┘  │  │  └─────────────────────────┘  │  │  │
-│  │  │            │            │  │                               │  │  │
-│  │  │  ┌─────────▼─────────┐  │  │  ┌─────────────────────────┐  │  │  │
-│  │  │  │  Public Instance  │  │  │  │   S3 Gateway Endpoint   │  │  │  │
-│  │  │  └───────────────────┘  │  │  └────────────┬────────────┘  │  │  │
-│  │  └────────────┬────────────┘  └───────────────┼───────────────┘  │  │
-│  │               │                               │                  │  │
-│  └───────────────┼───────────────────────────────┼──────────────────┘  │
-│                  │ (Internet Gateway)            │ (Internal Routing)  │
-│                  ▼                               ▼                     │
-│           Public Internet                    Amazon S3                 │
-└────────────────────────────────────────────────────────────────────────┘
-```
-
-1.  **Network Tier (`modules/vpc` & `vpc/`)**: Provisions the core virtual network, allocating subnets across public, private, and database zones, and establishing secure gateways (IGW/NAT) and an S3 VPC endpoint.
+1.  **Network Tier (`modules/vpc` & `vpc/`)**: Provisions the core virtual network, allocating subnets across public, private, and database zones, and establishing secure gateways (IGW/NAT) and an S3 VPC endpoint. 
+    *(See the comprehensive ASCII architecture diagram in the [VPC Module README](./modules/vpc/README.md).)*
 2.  **Compute Tier (`compute/`)**: Queries the network tier's outputs dynamically via Terraform data sources and deploys a public-facing instance (e.g., as a bastion or proxy) and an isolated private-facing instance.
 
 ---
