@@ -1,32 +1,32 @@
 module "public-instance" {
-    depends_on = [ aws_key_pair.dev-key ]
-    source  = "terraform-aws-modules/ec2-instance/aws"
-    version = "6.4.0"
+  depends_on = [aws_key_pair.dev-key]
+  source     = "terraform-aws-modules/ec2-instance/aws"
+  version    = "6.4.0"
 
-    name = "dev-public-instance"
-    ami = "ami-0ec10929233384c7f"
-    associate_public_ip_address = true
-    availability_zone = "us-east-1b"
-    instance_type   = "t3.micro"
-    key_name = aws_key_pair.dev-key.key_name
-    subnet_id = data.aws_subnet.public.id
-    vpc_security_group_ids = [aws_security_group.allow_tls.id]
+  name                        = "dev-public-instance"
+  ami                         = "ami-0ec10929233384c7f"
+  associate_public_ip_address = true
+  availability_zone           = "us-east-1b"
+  instance_type               = "t3.micro"
+  key_name                    = aws_key_pair.dev-key.key_name
+  subnet_id                   = data.aws_subnet.public.id
+  vpc_security_group_ids      = [aws_security_group.allow_tls.id]
 
 }
 
 module "private-instance" {
-    depends_on = [ aws_key_pair.dev-key ]
-    source  = "terraform-aws-modules/ec2-instance/aws"
-    version = "6.4.0"
+  depends_on = [aws_key_pair.dev-key]
+  source     = "terraform-aws-modules/ec2-instance/aws"
+  version    = "6.4.0"
 
-    name = "dev-private-instance"
-    ami = "ami-0ec10929233384c7f"
-    associate_public_ip_address = false
-    availability_zone = "us-east-1b"
-    instance_type   = "t3.micro"
-    key_name = aws_key_pair.dev-key.key_name
-    subnet_id = data.aws_subnet.private.id
-    vpc_security_group_ids = [aws_security_group.allow_tls.id]
+  name                        = "dev-private-instance"
+  ami                         = "ami-0ec10929233384c7f"
+  associate_public_ip_address = false
+  availability_zone           = "us-east-1b"
+  instance_type               = "t3.micro"
+  key_name                    = aws_key_pair.dev-key.key_name
+  subnet_id                   = data.aws_subnet.private.id
+  vpc_security_group_ids      = [aws_security_group.allow_tls.id]
 
 }
 
@@ -36,7 +36,7 @@ resource "tls_private_key" "dev-rsa-key" {
 }
 
 resource "aws_key_pair" "dev-key" {
-    depends_on = [ tls_private_key.dev-rsa-key ]
+  depends_on = [tls_private_key.dev-rsa-key]
   key_name   = "generated-key"
   public_key = tls_private_key.dev-rsa-key.public_key_openssh
 }
