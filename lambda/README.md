@@ -123,40 +123,13 @@ variable "function_name" {
 
 ### Required IAM Permissions
 
-The Lambda execution role requires the following permissions:
+The Lambda execution role requires the following roles:
+Role Name: lambda_execution_role
 
 ```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:DescribeInstances",
-        "ec2:DescribeInstanceStatus",
-        "ec2:DescribeTags"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:PutObject",
-        "s3:PutObjectAcl"
-      ],
-      "Resource": "arn:aws:s3:::your-bucket-name/*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "logs:CreateLogGroup",
-        "logs:CreateLogStream",
-        "logs:PutLogEvents"
-      ],
-      "Resource": "arn:aws:logs:*:*:*"
-    }
-  ]
-}
+AmazonEC2ReadOnlyAccess
+AmazonS3FullAccess
+AWSLambdaBasicExecutionRole
 ```
 
 ### EventBridge Rule Pattern
