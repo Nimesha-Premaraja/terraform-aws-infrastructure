@@ -12,3 +12,7 @@ module "lambda_function" {
     Name = var.function_name
   }
 }
+
+# IAM name - https://github.com/kodekloudhub/community-faq/blob/main/docs/playgrounds.md#aws-iam
+
+# Ex: lambda_execution_role
