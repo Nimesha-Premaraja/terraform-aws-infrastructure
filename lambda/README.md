@@ -83,139 +83,85 @@ terraform apply
 
 ## AWS Resources
 
-1. Amazon EC2
-Purpose
+This module provisions and integrates the following AWS services:
 
-Amazon EC2 (Elastic Compute Cloud) provides virtual machines in the AWS Cloud. In this project, launching an EC2 instance acts as the event that triggers the entire workflow.
+| Service | Purpose | Role in Workflow |
+|---------|---------|------------------|
+| **Amazon EC2** | Compute instances | Trigger source for the automation |
+| **AWS Lambda** | Serverless compute | Executes metadata collection logic |
+| **Amazon S3** | Object storage | Stores collected metadata files |
+| **AWS CloudTrail** | API activity logging | Records `RunInstances` API calls |
+| **Amazon EventBridge** | Event routing | Detects EC2 creation and triggers Lambda |
+| **AWS IAM** | Access management | Provides Lambda execution permissions |
+| **Amazon CloudWatch** | Monitoring & logging | Tracks Lambda execution logs |
 
-How It Is Used
-Launch a new EC2 instance.
-CloudTrail records the RunInstances API call.
-EventBridge detects the event.
-Lambda retrieves metadata about the instance.
-How to Create
-Open the AWS Console.
-Navigate to EC2.
-Click Launch Instance.
-Enter an instance name.
-Select an Amazon Machine Image (AMI).
-Choose an instance type (e.g., t2.micro).
-Create or select an existing key pair.
-Configure the security group.
-Click Launch Instance.
+### Event Flow
 
+```
+Launch EC2 → CloudTrail Records → EventBridge Detects → Lambda Executes → S3 Storage
+```
 
-2. Amazon S3
-Purpose
+## Configuration
 
-Amazon S3 is used to store the metadata collected from EC2 instances.
+### Module Variables
 
-Each EC2 instance generates one metadata file that is uploaded automatically by the Lambda function.
+```hcl
+variable "function_name" {
+  description = "Name of the Lambda function"
+  type        = string
+  default     = "ec2-metadata-collector"
+}
+```
 
-Example:
+### Lambda Function Details
 
-ec2-metadata-storage/
-└── ec2-metadata/
-      ├── i-0123456789abcdef.txt
-      ├── i-045678912345678.txt
-      └── i-078945612378945.txt
-How It Is Used
+- **Runtime**: Python 3.12
+- **Handler**: `index.lambda_handler`
+- **Source Path**: `../src/lambda-function1`
+- **Memory**: Default (128 MB)
+- **Timeout**: Default (3 seconds)
 
-Lambda uploads metadata files to the bucket using the PutObject API.
+### Required IAM Permissions
 
-How to Create
-Open Amazon S3.
-Click Create bucket.
-Enter a globally unique bucket name.
-Choose your AWS Region.
-Leave the default settings (or configure as required).
-Click Create bucket.
-3. AWS Lambda
-Purpose
+The Lambda execution role requires the following permissions:
 
-AWS Lambda is the serverless compute service responsible for processing EC2 creation events.
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeInstances",
+        "ec2:DescribeInstanceStatus",
+        "ec2:DescribeTags"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:PutObjectAcl"
+      ],
+      "Resource": "arn:aws:s3:::your-bucket-name/*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:aws:logs:*:*:*"
+    }
+  ]
+}
+```
 
-It automatically executes Python code without provisioning or managing servers.
+### EventBridge Rule Pattern
 
-Responsibilities
-Receive EventBridge events.
-Extract the EC2 Instance ID.
-Retrieve metadata using the EC2 API.
-Generate a text file.
-Upload the file to Amazon S3.
-How to Create
-Open AWS Lambda.
-Click Create Function.
-Select Author from scratch.
-Enter a function name.
-Choose Python 3.x as the runtime.
-Select or create an execution role.
-Click Create Function.
-Add your Python code.
-Deploy the function.
-4. IAM (Identity and Access Management)
-Purpose
-
-IAM controls permissions for AWS resources.
-
-The Lambda execution role allows the function to:
-
-Read EC2 metadata
-Upload files to S3
-Write logs to CloudWatch
-Required Permissions
-ec2:DescribeInstances
-
-s3:PutObject
-
-logs:CreateLogGroup
-
-logs:CreateLogStream
-
-logs:PutLogEvents
-How to Create the Lambda Execution Role
-Open IAM.
-Navigate to Roles.
-Click Create Role.
-Select AWS Service.
-Choose Lambda.
-Attach the following policies:
-AmazonEC2ReadOnlyAccess
-AmazonS3FullAccess (for learning purposes)
-AWSLambdaBasicExecutionRole
-Name the role (e.g., Lambda-EC2MetadataRole).
-Click Create Role.
-5. AWS CloudTrail
-Purpose
-
-CloudTrail records all AWS API activity within your account.
-
-When an EC2 instance is launched, CloudTrail records the RunInstances API call. EventBridge listens for this event.
-
-How It Is Used
-
-Launch EC2
-      │
-      ▼
-CloudTrail Records API Call
-      │
-      ▼
-EventBridge Receives Event
-How to Create
-Open CloudTrail.
-Click Create Trail.
-Enter a trail name.
-Enable Management Events.
-Select Read/Write Events.
-Create the trail.
-6. Amazon EventBridge
-Purpose
-
-Amazon EventBridge routes AWS events to target services.
-
-In this project, it detects EC2 creation events and invokes the Lambda function.
-
-Event Pattern
+```json
 {
   "source": ["aws.ec2"],
   "detail-type": ["AWS API Call via CloudTrail"],
@@ -224,68 +170,243 @@ Event Pattern
     "eventName": ["RunInstances"]
   }
 }
-How to Create
-Open Amazon EventBridge.
-Navigate to Rules.
-Click Create Rule.
-Enter a rule name.
-Select Event Pattern.
-Choose Custom Pattern.
-Paste the JSON event pattern.
-Select Lambda Function as the target.
-Choose your Lambda function.
-Click Create Rule.
-7. Amazon CloudWatch
-Purpose
+```
 
-CloudWatch stores Lambda execution logs.
+## Deployment
 
-It helps monitor application execution and troubleshoot issues.
+### Step 1: Prepare Lambda Source Code
 
-Example log output:
+Ensure your Lambda function code is in `../src/lambda-function1/index.py`:
 
-START RequestId: xxxxxxxxx
+```python
+import boto3
+import json
+from datetime import datetime
 
-Received Event
+def lambda_handler(event, context):
+    # Extract instance ID from event
+    instance_id = event['detail']['responseElements']['instancesSet']['items'][0]['instanceId']
+    
+    # Collect metadata
+    ec2 = boto3.client('ec2')
+    response = ec2.describe_instances(InstanceIds=[instance_id])
+    
+    # Generate and upload to S3
+    s3 = boto3.client('s3')
+    # ... rest of your Lambda code
+```
 
-Extracted Instance ID
+### Step 2: Configure Variables
 
-Metadata Uploaded Successfully
+Create a `terraform.tfvars` file:
 
-END RequestId: xxxxxxxxx
-How to Access Logs
-Open CloudWatch.
-Select Log Groups.
-Open:
-/aws/lambda/EC2MetadataCollector
-Select the latest log stream.
-Review the execution logs.
-Project Workflow
+```hcl
+function_name = "my-ec2-metadata-collector"
+```
+
+### Step 3: Deploy
+
+```bash
+terraform init
+terraform plan -out=tfplan
+terraform apply tfplan
+```
+
+### Step 4: Verify Deployment
+
+```bash
+# Check Lambda function
+aws lambda list-functions --query "Functions[?FunctionName=='ec2-metadata-collector']"
+
+# Check EventBridge rule
+aws events list-rules --name-prefix ec2-metadata
+
+# Test by launching an EC2 instance
+aws ec2 run-instances --image-id ami-xxxxx --instance-type t2.micro --count 1
+```
+
+## Usage Example
+
+### Basic Usage
+
+```hcl
+module "ec2_metadata_lambda" {
+  source = "./lambda"
+
+  function_name = "ec2-metadata-collector"
+}
+```
+
+### With Custom Configuration
+
+```hcl
+module "ec2_metadata_lambda" {
+  source = "./lambda"
+
+  function_name = "production-ec2-metadata-collector"
+  
+  tags = {
+    Environment = "production"
+    Project     = "infrastructure-automation"
+    ManagedBy   = "terraform"
+  }
+}
+```
+
+## Outputs
+
+| Output Name | Description | Example Value |
+|-------------|-------------|---------------|
+| `lambda_function_arn` | ARN of the Lambda function | `arn:aws:lambda:us-east-1:123456789012:function:ec2-metadata-collector` |
+| `lambda_function_name` | Name of the Lambda function | `ec2-metadata-collector` |
+| `lambda_role_arn` | ARN of the Lambda execution role | `arn:aws:iam::123456789012:role/lambda-exec-role` |
+
+## Monitoring
+
+### CloudWatch Logs
+
+View Lambda execution logs:
+
+```bash
+aws logs tail /aws/lambda/ec2-metadata-collector --follow
+```
+
+### Expected Log Output
 
 ```
-                Launch EC2 Instance
-                        │
-                        ▼
-                AWS CloudTrail
-         Records RunInstances Event
-                        │
-                        ▼
-              Amazon EventBridge
-            Detects Matching Event
-                        │
-                        ▼
-                AWS Lambda Executes
-                        │
-      ┌─────────────────┴─────────────────┐
-      │                                   │
-      ▼                                   ▼
-Retrieve EC2 Metadata             Format Text File
-      │                                   │
-      └─────────────────┬─────────────────┘
-                        ▼
-                 Upload File to S3
-                        │
-                        ▼
-           EC2 Metadata Successfully Stored
+START RequestId: abc123-def456-ghi789
+[INFO] Received EC2 creation event
+[INFO] Instance ID: i-0123456789abcdef0
+[INFO] Collecting metadata...
+[INFO] Metadata collected successfully
+[INFO] Uploading to S3: ec2-metadata/i-0123456789abcdef0.txt
+[INFO] Upload successful
+END RequestId: abc123-def456-ghi789
+REPORT Duration: 234.56 ms  Billed Duration: 235 ms  Memory Size: 128 MB  Max Memory Used: 45 MB
+```
+
+### CloudWatch Metrics
+
+Monitor these key metrics:
+- **Invocations** - Number of times Lambda is triggered
+- **Errors** - Failed executions
+- **Duration** - Execution time
+- **Throttles** - Rate-limited invocations
+
+## Troubleshooting
+
+### Lambda Not Triggering
+
+**Problem**: EC2 instances launch but Lambda doesn't execute
+
+**Solutions**:
+1. Verify CloudTrail is enabled for management events
+2. Check EventBridge rule is active: `aws events describe-rule --name <rule-name>`
+3. Confirm Lambda has EventBridge trigger permission
+4. Review CloudWatch logs for errors
+
+### Permission Denied Errors
+
+**Problem**: Lambda fails with access denied
+
+**Solutions**:
+1. Verify IAM role has `ec2:DescribeInstances` permission
+2. Check S3 bucket policy allows Lambda to write
+3. Review Lambda execution role trust policy
+4. Ensure CloudWatch Logs permissions are granted
+
+### Metadata File Not in S3
+
+**Problem**: Lambda executes but file doesn't appear in S3
+
+**Solutions**:
+1. Check S3 bucket name in Lambda code
+2. Verify S3 bucket exists and is in correct region
+3. Review Lambda CloudWatch logs for S3 upload errors
+4. Confirm S3 bucket policy allows PutObject
+
+### Common Error Messages
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `AccessDeniedException` | Missing IAM permissions | Add required permissions to Lambda role |
+| `NoSuchBucket` | S3 bucket doesn't exist | Create bucket or update bucket name |
+| `InvalidInstanceID.NotFound` | Instance ID not found | Check event parsing logic |
+| `Timeout` | Lambda execution time exceeded | Increase timeout in Lambda configuration |
+
+## Security Considerations
+
+### Best Practices
+
+✅ **Least Privilege**: Grant only necessary IAM permissions  
+✅ **Encryption**: Enable S3 bucket encryption at rest  
+✅ **VPC**: Deploy Lambda in VPC for network isolation (if needed)  
+✅ **Secrets Management**: Use AWS Secrets Manager for sensitive data  
+✅ **CloudTrail**: Keep CloudTrail logs in separate, secured S3 bucket  
+✅ **Monitoring**: Enable CloudWatch alarms for failed invocations
+
+### IAM Role Naming Convention
+
+Per [AWS IAM Best Practices](https://github.com/kodekloudhub/community-faq/blob/main/docs/playgrounds.md#aws-iam):
+- Use descriptive names: `lambda_ec2_metadata_collector_role`
+- Include purpose and service type
+- Avoid generic names like `lambda_role`
+
+## S3 Bucket Structure
+
+Metadata files are organized as follows:
 
 ```
+ec2-metadata-storage/
+└── ec2-metadata/
+    ├── i-0123456789abcdef0.txt
+    ├── i-0abcdef123456789.txt
+    └── i-089abcdef01234567.txt
+```
+
+Each file contains:
+- Instance ID
+- Instance Type
+- Launch Time
+- Availability Zone
+- Private IP Address
+- Public IP Address (if assigned)
+- Security Groups
+- Tags
+
+## Cost Estimation
+
+**Estimated monthly cost for moderate usage:**
+
+| Service | Usage | Cost |
+|---------|-------|------|
+| Lambda | 1000 invocations/month | ~$0.20 |
+| S3 Storage | 1 GB | ~$0.023 |
+| CloudTrail | Management events | $0.00 (first trail free) |
+| EventBridge | Custom events | ~$1.00 |
+| **Total** | | **~$1.25/month** |
+
+> **Note**: Costs vary by region and actual usage. This is an estimate for reference only.
+
+## Contributing
+
+Contributions are welcome! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.
+
+## Support
+
+For issues and questions:
+- 📝 Create an issue in the repository
+- 📖 Check the [AWS Lambda documentation](https://docs.aws.amazon.com/lambda/)
+- 📖 Review [Terraform AWS Lambda module](https://registry.terraform.io/modules/terraform-aws-modules/lambda/aws/latest)
+
+---
+
+**Note**: Ensure CloudTrail is properly configured before deploying this module. The Lambda function will only trigger when EC2 `RunInstances` events are captured by CloudTrail and forwarded through EventBridge.
