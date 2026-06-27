@@ -110,6 +110,8 @@ module "eventbridge" {
       }
     ]
   }
+
+  tags = {}
 }
 
 # Lambda permission to allow EventBridge invocation
