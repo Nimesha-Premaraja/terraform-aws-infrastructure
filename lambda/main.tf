@@ -7,47 +7,52 @@ locals {
 }
 
 # S3 Bucket for EC2 metadata storage
-module "s3_bucket" {
-  source  = "terraform-aws-modules/s3-bucket/aws"
-  version = "4.11.0"
-
+resource "aws_s3_bucket" "metadata" {
   bucket        = local.bucket_name
   force_destroy = var.s3_force_destroy
+}
 
-  versioning = {
-    enabled = true
-  }
-
-  server_side_encryption_configuration = {
-    rule = {
-      apply_server_side_encryption_by_default = {
-        sse_algorithm = "AES256"
-      }
-      bucket_key_enabled = true
-    }
-  }
-
-  tags = {
-    Name    = local.bucket_name
-    Purpose = "EC2 metadata storage"
+resource "aws_s3_bucket_versioning" "metadata" {
+  bucket = aws_s3_bucket.metadata.id
+  versioning_configuration {
+    status = "Enabled"
   }
 }
 
-# Lambda Function for EC2 metadata collection
-module "lambda_function" {
-  source  = "terraform-aws-modules/lambda/aws"
-  version = "7.14.0"
+resource "aws_s3_bucket_server_side_encryption_configuration" "metadata" {
+  bucket = aws_s3_bucket.metadata.id
 
-  function_name = var.function_name
-  description   = "Collects and stores EC2 instance metadata to S3"
-  handler       = "index.lambda_handler"
-  runtime       = "python3.12"
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+    bucket_key_enabled = true
+  }
+}
 
-  source_path = "${path.module}/src/ec2_metadata_collector"
+# IAM Role for Lambda execution
+resource "aws_iam_role" "lambda_execution_role" {
+  name = "lambda_execution_role"
 
-  role_name          = "lambda_execution_role"
-  attach_policy_json = true
-  policy_json = jsonencode({
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "lambda_policy" {
+  name = "lambda_execution_policy"
+  role = aws_iam_role.lambda_execution_role.id
+
+  policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
@@ -65,60 +70,74 @@ module "lambda_function" {
         Action = [
           "s3:PutObject"
         ]
-        Resource = "${module.s3_bucket.s3_bucket_arn}/ec2-metadata/*"
+        Resource = "${aws_s3_bucket.metadata.arn}/ec2-metadata/*"
+      },
+      {
+        Sid    = "AllowCloudWatchLogs"
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "arn:aws:logs:*:*:*"
       }
     ]
   })
+}
 
-  environment_variables = {
-    S3_BUCKET_NAME = module.s3_bucket.s3_bucket_id
-    LOG_LEVEL      = "INFO"
-  }
+# Package Lambda function code
+data "archive_file" "lambda_zip" {
+  type        = "zip"
+  source_dir  = "${path.module}/src/ec2_metadata_collector"
+  output_path = "${path.module}/lambda_function.zip"
+}
 
-  cloudwatch_logs_retention_in_days = var.log_retention_days
+# Lambda Function for EC2 metadata collection
+resource "aws_lambda_function" "ec2_metadata_collector" {
+  filename         = data.archive_file.lambda_zip.output_path
+  function_name    = var.function_name
+  role             = aws_iam_role.lambda_execution_role.arn
+  handler          = "index.lambda_handler"
+  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
+  runtime          = "python3.12"
+  timeout          = var.lambda_timeout
+  memory_size      = var.lambda_memory_size
+  description      = "Collects and stores EC2 instance metadata to S3"
 
-  tags = {
-    Name = var.function_name
+  environment {
+    variables = {
+      S3_BUCKET_NAME = aws_s3_bucket.metadata.id
+      LOG_LEVEL      = "INFO"
+    }
   }
 }
 
 # EventBridge rule for EC2 state changes
-module "eventbridge" {
-  source  = "terraform-aws-modules/eventbridge/aws"
-  version = "3.14.2"
+resource "aws_cloudwatch_event_rule" "ec2_running" {
+  name        = "ec2-running-state-rule"
+  description = "Capture EC2 instances entering running state"
 
-  create_bus = false
-
-  rules = {
-    ec2_running_state = {
-      description = "Capture EC2 instances entering running state"
-      event_pattern = jsonencode({
-        source      = ["aws.ec2"]
-        detail-type = ["EC2 Instance State-change Notification"]
-        detail = {
-          state = ["running"]
-        }
-      })
+  event_pattern = jsonencode({
+    source      = ["aws.ec2"]
+    detail-type = ["EC2 Instance State-change Notification"]
+    detail = {
+      state = ["running"]
     }
-  }
+  })
+}
 
-  targets = {
-    ec2_running_state = [
-      {
-        name = "trigger-lambda-on-ec2-running"
-        arn  = module.lambda_function.lambda_function_arn
-      }
-    ]
-  }
-
-  tags = {}
+resource "aws_cloudwatch_event_target" "lambda" {
+  rule      = aws_cloudwatch_event_rule.ec2_running.name
+  target_id = "ec2-metadata-collector"
+  arn       = aws_lambda_function.ec2_metadata_collector.arn
 }
 
 # Lambda permission to allow EventBridge invocation
 resource "aws_lambda_permission" "allow_eventbridge" {
   statement_id  = "AllowExecutionFromEventBridge"
   action        = "lambda:InvokeFunction"
-  function_name = module.lambda_function.lambda_function_name
+  function_name = aws_lambda_function.ec2_metadata_collector.function_name
   principal     = "events.amazonaws.com"
-  source_arn    = module.eventbridge.eventbridge_rule_arns["ec2_running_state"]
+  source_arn    = aws_cloudwatch_event_rule.ec2_running.arn
 }

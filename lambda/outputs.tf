@@ -1,39 +1,39 @@
 output "lambda_function_name" {
   description = "Name of the deployed Lambda function"
-  value       = module.lambda_function.lambda_function_name
+  value       = aws_lambda_function.ec2_metadata_collector.function_name
 }
 
 output "lambda_function_arn" {
   description = "ARN of the deployed Lambda function"
-  value       = module.lambda_function.lambda_function_arn
+  value       = aws_lambda_function.ec2_metadata_collector.arn
 }
 
 output "lambda_iam_role_name" {
   description = "Name of the IAM execution role used by Lambda"
-  value       = module.lambda_function.lambda_role_name
+  value       = aws_iam_role.lambda_execution_role.name
 }
 
 output "lambda_iam_role_arn" {
   description = "ARN of the IAM execution role used by Lambda"
-  value       = module.lambda_function.lambda_role_arn
+  value       = aws_iam_role.lambda_execution_role.arn
 }
 
 output "s3_bucket_name" {
   description = "Name of the S3 bucket where EC2 metadata is stored"
-  value       = module.s3_bucket.s3_bucket_id
+  value       = aws_s3_bucket.metadata.id
 }
 
 output "s3_bucket_arn" {
   description = "ARN of the S3 bucket"
-  value       = module.s3_bucket.s3_bucket_arn
+  value       = aws_s3_bucket.metadata.arn
 }
 
 output "eventbridge_rule_arn" {
   description = "ARN of the EventBridge rule that triggers the Lambda"
-  value       = module.eventbridge.eventbridge_rule_arns["ec2_running_state"]
+  value       = aws_cloudwatch_event_rule.ec2_running.arn
 }
 
 output "eventbridge_rule_name" {
   description = "Name of the EventBridge rule"
-  value       = keys(module.eventbridge.eventbridge_rule_arns)[0]
+  value       = aws_cloudwatch_event_rule.ec2_running.name
 }
