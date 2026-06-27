@@ -1,18 +1,121 @@
-module "lambda_function" {
-  source = "terraform-aws-modules/lambda/aws"
+# Get current AWS account ID for unique bucket naming
+data "aws_caller_identity" "current" {}
 
-  function_name = var.function_name
-  description   = "My awesome lambda function"
-  handler       = "index.lambda_handler"
-  runtime       = "python3.12"
+# Construct globally unique S3 bucket name
+locals {
+  bucket_name = "${var.prefix}-ec2-metadata-${data.aws_caller_identity.current.account_id}"
+}
 
-  source_path = "../src/lambda-function1"
+# S3 Bucket for EC2 metadata storage
+resource "aws_s3_bucket" "metadata" {
+  bucket        = local.bucket_name
+  force_destroy = var.s3_force_destroy
+}
 
-  tags = {
-    Name = var.function_name
+resource "aws_s3_bucket_versioning" "metadata" {
+  bucket = aws_s3_bucket.metadata.id
+  versioning_configuration {
+    status = "Enabled"
   }
 }
 
-# IAM name - https://github.com/kodekloudhub/community-faq/blob/main/docs/playgrounds.md#aws-iam
+resource "aws_s3_bucket_server_side_encryption_configuration" "metadata" {
+  bucket = aws_s3_bucket.metadata.id
 
-# Ex: lambda_execution_role
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+    bucket_key_enabled = true
+  }
+}
+
+# IAM Role for Lambda execution
+resource "aws_iam_role" "lambda_execution_role" {
+  name = "lambda_execution_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+# Attach AWS managed policies to Lambda role
+resource "aws_iam_role_policy_attachment" "lambda_basic" {
+  role       = aws_iam_role.lambda_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_ec2_readonly" {
+  role       = aws_iam_role.lambda_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_s3_full" {
+  role       = aws_iam_role.lambda_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+}
+
+# Package Lambda function code
+data "archive_file" "lambda_zip" {
+  type        = "zip"
+  source_dir  = "${path.module}/src/ec2_metadata_collector"
+  output_path = "${path.module}/lambda_function.zip"
+}
+
+# Lambda Function for EC2 metadata collection
+resource "aws_lambda_function" "ec2_metadata_collector" {
+  filename         = data.archive_file.lambda_zip.output_path
+  function_name    = var.function_name
+  role             = aws_iam_role.lambda_execution_role.arn
+  handler          = "index.lambda_handler"
+  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
+  runtime          = "python3.12"
+  timeout          = var.lambda_timeout
+  memory_size      = var.lambda_memory_size
+  description      = "Collects and stores EC2 instance metadata to S3"
+
+  environment {
+    variables = {
+      S3_BUCKET_NAME = aws_s3_bucket.metadata.id
+      LOG_LEVEL      = "INFO"
+    }
+  }
+}
+
+# EventBridge rule for EC2 state changes
+resource "aws_cloudwatch_event_rule" "ec2_running" {
+  name        = "ec2-running-state-rule"
+  description = "Capture EC2 instances entering running state"
+
+  event_pattern = jsonencode({
+    source      = ["aws.ec2"]
+    detail-type = ["EC2 Instance State-change Notification"]
+    detail = {
+      state = ["running"]
+    }
+  })
+}
+
+resource "aws_cloudwatch_event_target" "lambda" {
+  rule      = aws_cloudwatch_event_rule.ec2_running.name
+  target_id = "ec2-metadata-collector"
+  arn       = aws_lambda_function.ec2_metadata_collector.arn
+}
+
+# Lambda permission to allow EventBridge invocation
+resource "aws_lambda_permission" "allow_eventbridge" {
+  statement_id  = "AllowExecutionFromEventBridge"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.ec2_metadata_collector.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.ec2_running.arn
+}
