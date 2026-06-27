@@ -1,1 +1,0 @@
-{"filename": "builds/fa32d071e022554032c533838943c37a5cf6c0e7d930438efc65f0ddbd1c312f.zip", "runtime": "python3.12", "artifacts_dir": "builds", "build_plan": [["zip", "./src/ec2_metadata_collector", null]]}

@@ -48,42 +48,20 @@ resource "aws_iam_role" "lambda_execution_role" {
   })
 }
 
-resource "aws_iam_role_policy" "lambda_policy" {
-  name = "lambda_execution_policy"
-  role = aws_iam_role.lambda_execution_role.id
+# Attach AWS managed policies to Lambda role
+resource "aws_iam_role_policy_attachment" "lambda_basic" {
+  role       = aws_iam_role.lambda_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "AllowEC2Describe"
-        Effect = "Allow"
-        Action = [
-          "ec2:DescribeInstances",
-          "ec2:DescribeTags"
-        ]
-        Resource = "*"
-      },
-      {
-        Sid    = "AllowS3PutMetadata"
-        Effect = "Allow"
-        Action = [
-          "s3:PutObject"
-        ]
-        Resource = "${aws_s3_bucket.metadata.arn}/ec2-metadata/*"
-      },
-      {
-        Sid    = "AllowCloudWatchLogs"
-        Effect = "Allow"
-        Action = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents"
-        ]
-        Resource = "arn:aws:logs:*:*:*"
-      }
-    ]
-  })
+resource "aws_iam_role_policy_attachment" "lambda_ec2_readonly" {
+  role       = aws_iam_role.lambda_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_s3_full" {
+  role       = aws_iam_role.lambda_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
 
 # Package Lambda function code
