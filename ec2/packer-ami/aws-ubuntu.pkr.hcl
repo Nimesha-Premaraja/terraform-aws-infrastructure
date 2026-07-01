@@ -8,7 +8,7 @@ packer {
 }
 
 source "amazon-ebs" "ubuntu" {
-  ami_name        = "dev-ami-${timestamp}"
+  ami_name        = "dev-ami-${formatdate("YYYYMMDD-hhmmss", timestamp())}"
   instance_type   = "t2.micro"
   region          = var.aws_region
   ami_description = "Ubuntu AMI from Packer build"
@@ -34,18 +34,25 @@ build {
   sources = [
     "source.amazon-ebs.ubuntu"
   ]
+
+  provisioner "shell" {
+    inline = [
+      <<EOF
+        cat > /home/ubuntu/vm-metadata.txt <<EOT
+        VM Metadata
+        ===========
+        Hostname: $(hostname)
+        OS: $(grep '^PRETTY_NAME=' /etc/os-release | cut -d= -f2 | tr -d '"')
+        Kernel: $(uname -r)
+        Architecture: $(uname -m)
+        Memory:
+        $(free -h | awk '/^Mem:/ {print "  Total: "$2"\n  Used: "$3"\n  Free: "$4}')
+        Build Time: $(date)
+        EOT
+
+        chown ubuntu:ubuntu /home/ubuntu/vm-metadata.txt
+        chmod 644 /home/ubuntu/vm-metadata.txt
+        EOF
+    ]
+  }
 }
-
-
-# aws ec2 describe-images \
-#   --filters \
-#     "Name=name,Values=ubuntu/images/hvm-ssd-gp3/ubuntu-resolute-26.04-amd64-server-*" \
-#   --query "sort_by(Images,&CreationDate)[-1].[ImageId,Name]" \
-#   --output table
-
-# aws ec2 describe-images \
-#   --filters \
-#     "Name=name,Values=ubuntu/images/hvm-ssd-gp3/ubuntu-resolute-26.04-amd64-server-*" \
-#     "Name=state,Values=available" \
-#   --query "sort_by(Images,&CreationDate)[].[ImageId,Name,CreationDate]" \
-#   --output table
