@@ -8,9 +8,9 @@ packer {
 }
 
 source "amazon-ebs" "ubuntu" {
-  ami_name      = "dev-packer-${timestamp}"
-  instance_type = "t2.micro"
-  region        = var.aws_region
+  ami_name        = "dev-ami-${timestamp}"
+  instance_type   = "t2.micro"
+  region          = var.aws_region
   ami_description = "Ubuntu AMI from Packer build"
   source_ami_filter {
     filters = {
@@ -30,7 +30,7 @@ source "amazon-ebs" "ubuntu" {
 }
 
 build {
-  name    = "dev-packer-${timestamp}"
+  name = "dev-ami-build" # Name of the build within Packer
   sources = [
     "source.amazon-ebs.ubuntu"
   ]
@@ -38,7 +38,6 @@ build {
 
 
 # aws ec2 describe-images \
-#   --owners 637423280582 \
 #   --filters \
 #     "Name=name,Values=ubuntu/images/hvm-ssd-gp3/ubuntu-resolute-26.04-amd64-server-*" \
 #   --query "sort_by(Images,&CreationDate)[-1].[ImageId,Name]" \
