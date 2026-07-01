@@ -5,7 +5,7 @@ variable "aws_region" {
 
 variable "owner_id" {
   type    = string
-  default = ""
+  default = "099720109477"
 }
 
 variable "ami_name" {

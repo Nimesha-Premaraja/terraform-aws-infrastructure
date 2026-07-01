@@ -19,7 +19,7 @@ source "amazon-ebs" "ubuntu" {
       virtualization-type = "hvm"
     }
     most_recent = true
-    owners      = [var.owner_id]
+    owners      = [var.owner_id] # AMIs owned by Canonical
   }
 
   run_tags = {
