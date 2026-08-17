@@ -5,7 +5,7 @@ variable "aws_region" {
 }
 
 variable "prefix" {
-  description = "Short prefix applied to every resource name (e.g. dev, prod)"
+  description = "resource prefix applied"
   type        = string
   default     = "dev"
 }
