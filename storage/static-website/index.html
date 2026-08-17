@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="DevOps Engineer portfolio — AWS, Kubernetes, Terraform, CI/CD, observability, security and automation." />
+  <meta name="theme-color" content="#0b1220" />
+  <title>DevOps Engineer | Cloud • Automation • Reliability</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <header class="topbar">
+    <a class="brand" href="#home" aria-label="Home">
+      <span class="brand-mark">&gt;_</span>
+      <span>devops.engineer</span>
+    </a>
+    <nav class="nav" aria-label="Primary navigation">
+      <a href="#about">About</a>
+      <a href="#skills">Skills</a>
+      <a href="#projects">Projects</a>
+      <a href="#experience">Experience</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <a class="nav-cta" href="#contact">Let's connect</a>
+  </header>
+
+  <main>
+    <section id="home" class="hero section">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="pulse"></span> BUILD • DEPLOY • OBSERVE • SCALE</p>
+        <h1>Engineering reliable cloud platforms that <span>move fast.</span></h1>
+        <p class="hero-text">
+          DevOps-focused engineer specializing in AWS infrastructure, Kubernetes, Terraform,
+          CI/CD automation, observability, security, and resilient production systems.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#projects">View projects <span>→</span></a>
+          <a class="btn btn-secondary" href="#contact">Get in touch</a>
+        </div>
+        <div class="hero-stats">
+          <div><strong>Cloud</strong><span>AWS • Azure • GCP</span></div>
+          <div><strong>IaC</strong><span>Terraform • Packer</span></div>
+          <div><strong>Platform</strong><span>Kubernetes • Docker</span></div>
+        </div>
+      </div>
+
+      <div class="terminal-card" aria-label="DevOps terminal illustration">
+        <div class="terminal-head">
+          <div class="dots"><i></i><i></i><i></i></div>
+          <span>production@cloud:~</span>
+          <span class="status">● online</span>
+        </div>
+        <div class="terminal-body">
+          <p><span class="prompt">$</span> kubectl get pods -A</p>
+          <p class="muted">NAMESPACE&nbsp;&nbsp;&nbsp;&nbsp;STATUS&nbsp;&nbsp;&nbsp;&nbsp;READY</p>
+          <p>platform&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Running</b>&nbsp;&nbsp;&nbsp;&nbsp;12/12</p>
+          <p>monitoring&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Running</b>&nbsp;&nbsp;&nbsp;&nbsp;08/08</p>
+          <p>payments&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Running</b>&nbsp;&nbsp;&nbsp;&nbsp;21/21</p>
+          <p><span class="prompt">$</span> terraform apply</p>
+          <p class="success">Apply complete! Resources: 17 added, 0 changed, 0 destroyed.</p>
+          <p><span class="prompt">$</span> ./deploy.sh production</p>
+          <p class="success">✓ deployment healthy — 99.99% target availability</p>
+          <p class="cursor">▌</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="about" class="section split-section">
+      <div>
+        <p class="section-label">01 / ABOUT</p>
+        <h2>Infrastructure should be <span>repeatable.</span></h2>
+      </div>
+      <div class="section-copy">
+        <p>
+          I design and automate cloud environments so engineering teams can ship safely and
+          consistently. My approach combines infrastructure as code, strong observability,
+          secure-by-default practices, and pragmatic automation.
+        </p>
+        <p>
+          From building AWS foundations to managing Kubernetes workloads and delivery pipelines,
+          the goal is simple: reduce operational friction while increasing reliability.
+        </p>
+      </div>
+    </section>
+
+    <section id="skills" class="section">
+      <div class="section-heading">
+        <div>
+          <p class="section-label">02 / TOOLBOX</p>
+          <h2>Technologies I work with</h2>
+        </div>
+        <p>Focused on tools that improve speed, safety, and operational visibility.</p>
+      </div>
+
+      <div class="skill-grid">
+        <article class="skill-card">
+          <div class="icon">☁</div>
+          <h3>Cloud</h3>
+          <p>AWS, Azure, GCP, IAM, VPC, EC2, S3, EKS, CloudWatch</p>
+        </article>
+        <article class="skill-card">
+          <div class="icon">▦</div>
+          <h3>Infrastructure as Code</h3>
+          <p>Terraform, CloudFormation, Packer, reusable modules and automation</p>
+        </article>
+        <article class="skill-card">
+          <div class="icon">⚙</div>
+          <h3>CI/CD</h3>
+          <p>GitHub Actions, Jenkins, GitLab CI, release automation and GitOps</p>
+        </article>
+        <article class="skill-card">
+          <div class="icon">◉</div>
+          <h3>Containers</h3>
+          <p>Docker, Kubernetes, Helm, EKS, workload lifecycle and scaling</p>
+        </article>
+        <article class="skill-card">
+          <div class="icon">⌁</div>
+          <h3>Observability</h3>
+          <p>Prometheus, Grafana, ELK, Datadog, logs, metrics, tracing and alerts</p>
+        </article>
+        <article class="skill-card">
+          <div class="icon">⌘</div>
+          <h3>Automation</h3>
+          <p>Python, Bash, Linux, APIs, configuration management and operational tooling</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="projects" class="section">
+      <div class="section-heading">
+        <div>
+          <p class="section-label">03 / SELECTED WORK</p>
+          <h2>Projects that solve operational problems</h2>
+        </div>
+      </div>
+
+      <div class="project-grid">
+        <article class="project-card featured">
+          <div class="project-top"><span class="tag">AWS</span><span class="number">01</span></div>
+          <h3>Reusable AWS Platform Foundation</h3>
+          <p>Provisioned repeatable cloud foundations using Terraform with network, IAM, compute, logging and environment separation.</p>
+          <div class="project-meta"><span>Terraform</span><span>AWS</span><span>IAM</span><span>VPC</span></div>
+        </article>
+        <article class="project-card">
+          <div class="project-top"><span class="tag">K8S</span><span class="number">02</span></div>
+          <h3>Kubernetes Delivery Platform</h3>
+          <p>Built automated deployment workflows for containerized applications with health checks, rollout controls and operational visibility.</p>
+          <div class="project-meta"><span>Kubernetes</span><span>Docker</span><span>GitHub Actions</span></div>
+        </article>
+        <article class="project-card">
+          <div class="project-top"><span class="tag">SRE</span><span class="number">03</span></div>
+          <h3>Observability & Incident Readiness</h3>
+          <p>Implemented monitoring, dashboards, alerts and structured logging to shorten detection and troubleshooting cycles.</p>
+          <div class="project-meta"><span>Prometheus</span><span>Grafana</span><span>ELK</span></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="experience" class="section split-section experience-section">
+      <div>
+        <p class="section-label">04 / EXPERIENCE</p>
+        <h2>Reliable systems are built through <span>good engineering habits.</span></h2>
+      </div>
+      <div class="timeline">
+        <div class="timeline-item">
+          <span class="timeline-dot"></span>
+          <div>
+            <p class="timeline-date">DEVOPS / CLOUD ENGINEERING</p>
+            <h3>Infrastructure & Platform Engineering</h3>
+            <p>Designing cloud infrastructure, maintaining CI/CD pipelines, automating operational tasks, managing Linux systems and supporting production environments.</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <span class="timeline-dot"></span>
+          <div>
+            <p class="timeline-date">AUTOMATION & DELIVERY</p>
+            <h3>Developer Experience</h3>
+            <p>Improving deployment workflows with self-service automation, reusable infrastructure patterns and clear operational documentation.</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <span class="timeline-dot"></span>
+          <div>
+            <p class="timeline-date">RELIABILITY & SECURITY</p>
+            <h3>Production Operations</h3>
+            <p>Applying least-privilege access, security hardening, monitoring, alerting and incident response practices to reduce operational risk.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section metrics">
+      <div class="metric"><strong>99.99%</strong><span>availability mindset</span></div>
+      <div class="metric"><strong>IaC</strong><span>repeatable infrastructure</span></div>
+      <div class="metric"><strong>CI/CD</strong><span>faster, safer delivery</span></div>
+      <div class="metric"><strong>24/7</strong><span>operational readiness</span></div>
+    </section>
+
+    <section id="contact" class="section contact-section">
+      <div class="contact-card">
+        <div>
+          <p class="section-label">05 / CONTACT</p>
+          <h2>Let's build something <span>reliable.</span></h2>
+          <p>Open to DevOps, Platform Engineering, SRE and Cloud Infrastructure opportunities.</p>
+        </div>
+        <div class="contact-actions">
+          <a class="btn btn-primary" href="mailto:pmndilshan@gmail.com">Email me</a>
+          <a class="btn btn-secondary" href="https://www.linkedin.com/in/nimesha-premaraja-6103a0191" target="_blank" rel="noopener">LinkedIn ↗</a>
+          <a class="btn btn-secondary" href="https://github.com/Nimesha-Premaraja" target="_blank" rel="noopener">GitHub ↗</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>© <span id="year"></span> Nimesha Premaraja</span>
+    <span class="mono">Built for the cloud.</span>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
