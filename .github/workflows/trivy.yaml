@@ -1,0 +1,15 @@
+name: Trivy Scan
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  trivy-scan:
+    permissions:
+      contents: read
+      security-events: write
+      issues: write
+      id-token: write
+      pull-requests: write
+    uses: Nimesha-Premaraja/common-workflows/.github/workflows/trivy.yaml@patch-1
