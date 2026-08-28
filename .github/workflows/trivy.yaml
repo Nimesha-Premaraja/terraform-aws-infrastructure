@@ -15,4 +15,4 @@ jobs:
       issues: write
       id-token: write
       pull-requests: write
-    uses: Nimesha-Premaraja/common-workflows/.github/workflows/trivy.yaml@patch-1
+    uses: Nimesha-Premaraja/common-workflows/.github/workflows/trivy.yaml@patch-2
