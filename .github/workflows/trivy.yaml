@@ -1,8 +1,11 @@
 name: Trivy Scan
 on:
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      repo-name:
+        description: 'Name of the repository to scan'
+        required: true
+        default: 'terraform-aws-infrastructure'
 
 jobs:
   trivy-scan:
@@ -12,4 +15,4 @@ jobs:
       issues: write
       id-token: write
       pull-requests: write
-    uses: Nimesha-Premaraja/common-workflows/.github/workflows/trivy.yaml@patch-1
+    uses: Nimesha-Premaraja/common-workflows/.github/workflows/trivy.yaml@patch-2
