@@ -1,8 +1,11 @@
 name: Trivy Scan
 on:
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      repo-name:
+        description: 'Name of the repository to scan'
+        required: true
+        default: 'terraform-aws-infrastructure'
 
 jobs:
   trivy-scan:
