@@ -1,5 +1,5 @@
 variable "name-prefix" {
-  default = dev
+  default = "dev"
 }
 
 variable "region" {
